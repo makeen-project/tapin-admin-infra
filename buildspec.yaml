@@ -1,0 +1,21 @@
+version: 0.2
+env:
+  parameter-store:
+    DOCKERHUB_USERNAME: "DOCKERHUB_USERNAME"
+    DOCKERHUB_PASSWORD: "DOCKERHUB_PASSWORD"
+phases:
+  install:
+    runtime-versions:
+      nodejs: 12
+  pre_build:
+    commands:
+      - echo Docker Login...
+      - echo $DOCKERHUB_PASSWORD | docker login --username $DOCKERHUB_USERNAME --password-stdin
+      - echo Deploy website
+  build:
+    commands:
+      - rm -rf .git
+      - npm install
+      - npm run build
+      - aws s3 sync --delete ./build/ s3://${bucket_name}/ 
+
