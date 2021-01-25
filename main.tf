@@ -29,21 +29,28 @@ module "codepipeline_s3" {
   project_name = var.project_name  
 }
 
+module "tapin_admin_ui_config_s3" {
+  source = "github.com/makeen-project/terraform-templates-infra/modules/s3"
+  s3_bucket_name = ["${var.tapin_admin_ui_config_bucket_name}"]
+  environment = var.environment
+  project_name = var.project_name  
+}
+
 
 data "template_file" "s3_bucket_policy" {
   template = "${file("roles_and_policies/s3_bucket_policy.json")}"
 
   vars = {
-    bucket_name     = "${var.project_name}-${var.environment}-${var.mlm_web_bucket_name}"
+    bucket_name     = "${var.project_name}-${var.environment}-${var.tapin_admin_web_bucket_name}"
     aws_cloudfront_origin_access_identity_iam_arn = "${module.cdn.cloudfront_origin_access_identity_iam_arn}"
-    environment = "${var.environment}"
+    environment = var.environment
     project_name = "${var.project_name}"
   }
 }
 
-module "mlm_web_s3" {
+module "tapin_admin_web_s3" {
   source = "github.com/makeen-project/terraform-templates-infra/modules/s3"
-  s3_bucket_name = ["${var.mlm_web_bucket_name}"]
+  s3_bucket_name = ["${var.tapin_admin_web_bucket_name}"]
   s3_policy_document = "${data.template_file.s3_bucket_policy.rendered}"
   s3_static_website_vars = {
     index_document = "index.html"
@@ -63,7 +70,10 @@ data "template_file" "buildspec" {
   template = "${file("buildspec.yaml")}"
 
   vars = {
-    bucket_name     = "${module.mlm_web_s3.bucket_id["${var.mlm_web_bucket_name}"]}"
+    bucket_name     = "${module.tapin_admin_web_s3.bucket_id["${var.tapin_admin_web_bucket_name}"]}"
+    distribuition_id  = "${module.cdn.cloudfront_id}"
+    environment = var.environment
+    config_bucket = "${module.tapin_admin_ui_config_s3.bucket_id["${var.tapin_admin_ui_config_bucket_name}"]}"
   }
 }
 
@@ -162,7 +172,7 @@ module "cdn" {
     source = "github.com/makeen-project/terraform-templates-infra/modules/cdn"
     distribution_state = true
     default_root_object = "index.html"
-    alternate_domain_names = ["preprod.majorleaguemarkets.io"]
+    alternate_domain_names = ["${var.domain}"]
     cloudfront_default_cache_behavior = [{
       allowed_http_methods = ["GET", "HEAD"]
       cached_http_methods = ["GET", "HEAD"]
@@ -172,7 +182,7 @@ module "cdn" {
       min_ttl = 0
       smooth_streaming = null
       trusted_signers = []
-      target_origin_id = "${module.mlm_web_s3.bucket_id["${var.mlm_web_bucket_name}"]}"
+      target_origin_id = "${module.tapin_admin_web_s3.bucket_id["${var.tapin_admin_web_bucket_name}"]}"
       viewer_protocol_policy = "redirect-to-https"
       forwarded_values = [{
         forward_cookies = "none"
@@ -196,8 +206,8 @@ module "cdn" {
     }]
     cloudfront_origin = [{
       custom_origin_config = []
-      domain_name = "${module.mlm_web_s3.bucket_domain_name["${var.mlm_web_bucket_name}"]}"
-      origin_id = "${module.mlm_web_s3.bucket_id["${var.mlm_web_bucket_name}"]}"
+      domain_name = "${module.tapin_admin_web_s3.bucket_domain_name["${var.tapin_admin_web_bucket_name}"]}"
+      origin_id = "${module.tapin_admin_web_s3.bucket_id["${var.tapin_admin_web_bucket_name}"]}"
       origin_path = null
     }] 
     restrictions = [{

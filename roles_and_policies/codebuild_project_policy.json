@@ -35,6 +35,16 @@
         ]
       },
       {
+        "Sid": "S3DeleteObjectPolicy",
+        "Effect": "Allow",
+        "Action": [
+          "s3:DeleteObject"
+        ],
+        "Resource": [
+          "*"
+        ]
+      },
+      {
         "Sid": "S3PutObjectPolicy",
         "Effect": "Allow",
         "Action": [
@@ -90,6 +100,15 @@
         "Effect": "Allow",
         "Action": [
           "ssm:GetParameters"
+        ],
+        "Resource": 
+          "*"
+      },
+      {
+        "Sid": "CDNInvalidation",
+        "Effect": "Allow",
+        "Action": [
+          "cloudfront:CreateInvalidation"
         ],
         "Resource": 
           "*"

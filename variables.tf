@@ -18,7 +18,7 @@ variable "codepipeline_bucket_name" {
   type = string
 }
 
-variable "mlm_web_bucket_name" {
+variable "tapin_admin_web_bucket_name" {
   type = string
 }
 
@@ -47,5 +47,13 @@ variable "repo_token" {
 }
 
 variable "acm_arn" {
+  type = string
+}
+
+variable "domain" {
+  type = string
+}
+
+variable "tapin_admin_ui_config_bucket_name" {
   type = string
 }

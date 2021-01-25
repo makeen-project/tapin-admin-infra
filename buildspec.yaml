@@ -15,7 +15,12 @@ phases:
   build:
     commands:
       - rm -rf .git
-      - npm install
-      - npm run build
+      - aws s3 cp s3://${config_bucket}/${environment}/.env ./.env
+      - yarn install
+      - yarn run build
       - aws s3 sync --delete ./build/ s3://${bucket_name}/ 
+  post_build:
+    commands:
+      - echo 'Invalidating distribuition cache'
+      - aws cloudfront create-invalidation --distribution-id ${distribuition_id} --paths "/*"
 
